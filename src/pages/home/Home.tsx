@@ -1,5 +1,4 @@
 import {
-  EnvironmentOutlined,
   GlobalOutlined,
   HomeOutlined,
   MenuOutlined,
@@ -196,7 +195,7 @@ const Home = () => {
                 shape="circle"
                 size="large"
                 icon={<SearchOutlined />}
-                className="bg-rose-500 hover:!bg-rose-600"
+                className="bg-rose-500 "
               />
             </div>
           </div>
@@ -205,10 +204,10 @@ const Home = () => {
             <img
               src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop"
               alt="Airbnb hero"
-              className="h-[520px] w-full object-cover opacity-90"
+              className=" w-full object-cover opacity-90"
             />
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute inset-0 from-black/80 via-black/20 to-transparent" />
 
             <div className="absolute bottom-12 left-1/2 w-full -translate-x-1/2 px-6 text-center text-white">
               <h1 className="mb-4 text-4xl font-bold md:text-5xl">
@@ -221,9 +220,10 @@ const Home = () => {
 
               <div className="mt-8 flex justify-center gap-4">
                 <Link to="/login">
-                  <Button type="primary" size="large" className="bg-rose-500 hover:!bg-rose-600">
-                    Đăng nhập 
-                  </Button>
+                                  <Button
+                    type="primary"
+                    size="large"
+                    className="bg-rose-500 ">Đăng nhập</Button>
                 </Link>
 
                 <Link to="/register">
@@ -313,7 +313,7 @@ const Home = () => {
             <img
               src="https://images.unsplash.com/photo-1560184897-ae75f418493e?q=80&w=1000&auto=format&fit=crop"
               alt="Host"
-              className="h-full min-h-[320px] w-full object-cover"
+              className="h-full  w-full object-cover"
             />
           </div>
         </section>

@@ -1,16 +1,27 @@
 import { createBrowserRouter } from "react-router-dom";
+import Home from "../pages/home/Home";
 import Login from "../pages/auth/Login";
-import AdminLayout from "../layouts/AdminLayout.tsx";
+import Register from "../pages/auth/Register";
+import AdminLayout from "../layouts/AdminLayout";
 import Dashboard from "../pages/admin/Dashboard";
-import ProductManagement from "../pages/admin/ProductManagement";
 import UserManagement from "../pages/admin/UserManagement";
-import OrderManagement from "../pages/admin/OrderManagement";
+import LocationManagement from "../pages/admin/LocationManagement";
+import RoomManagement from "../pages/admin/RoomManagement";
+import BookingManagement from "../pages/admin/BookingManagement";
 import ProtectedRoute from "./ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
+    path: "/",
+    element: <Home />,
+  },
+  {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
   },
   {
     path: "/admin",
@@ -20,10 +31,26 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Dashboard /> },
-      { path: "products", element: <ProductManagement /> },
-      { path: "users", element: <UserManagement /> },
-      { path: "orders", element: <OrderManagement /> },
+      {
+        index: true,
+        element: <Dashboard />,
+      },
+      {
+        path: "users",
+        element: <UserManagement />,
+      },
+      {
+        path: "locations",
+        element: <LocationManagement />,
+      },
+      {
+        path: "rooms",
+        element: <RoomManagement />,
+      },
+      {
+        path: "bookings",
+        element: <BookingManagement />,
+      },
     ],
   },
 ]);

@@ -1,5 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Home from "../pages/home/Home";
+import RoomList from "../pages/rooms/RoomList";
+import RoomDetail from "../pages/rooms/RoomDetail.tsx";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import AdminLayout from "../layouts/AdminLayout";
@@ -22,6 +24,14 @@ export const router = createBrowserRouter([
   {
     path: "/register",
     element: <Register />,
+  },
+  {
+    path: "/rooms/:locationId",
+    element: <RoomList />,
+  },
+  {
+    path: "/rooms/detail/:id",
+    element: <RoomDetail/>
   },
   {
     path: "/admin",

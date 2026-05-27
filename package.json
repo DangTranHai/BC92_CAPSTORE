@@ -13,9 +13,11 @@
     "@reduxjs/toolkit": "^2.12.0",
     "antd": "^6.4.3",
     "axios": "^1.16.1",
+    "dayjs": "^1.11.21",
     "flowbite": "^4.0.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-icons": "^5.6.0",
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.15.1"
   },

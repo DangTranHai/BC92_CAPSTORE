@@ -169,7 +169,7 @@ const RoomDetail = () => {
           </div>
           {/* Right */}
           <div className="flex items-center gap-1">
-            <button onClick={handleYeuThich} className="flex items-center gap-1 rounded-lg px-3 text-sm underline hover:bg-gray-200 fw-lighter">
+            <button onClick={handleShare} className="flex items-center gap-1 rounded-lg px-3 text-sm underline hover:bg-gray-200 fw-lighter">
               <ShareAltOutlined /> Chia sẻ
             </button>
 

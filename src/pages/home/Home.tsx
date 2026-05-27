@@ -8,6 +8,11 @@ import {
 import { Button, Card } from "antd";
 import { Link } from "react-router-dom";
 
+import { useEffect, useState } from "react";
+import SearchBar from "./components/SearchBar";
+import { layViTriPhanTrang } from "../../services/location.service";
+import type{ ViTri } from "../../types/location.type";
+
 const nearbyLocations = [
   {
     name: "Thành phố Hồ Chí Minh",
@@ -58,6 +63,7 @@ const nearbyLocations = [
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300&auto=format&fit=crop",
   },
 ];
+
 
 const travelTypes = [
   {
@@ -130,6 +136,19 @@ const footerColumns = [
 ];
 
 const Home = () => {
+    const [nearbyLocations, setNearbyLocations] = useState<ViTri[]>([]);
+
+  useEffect(() => {
+    const fetchViTri = async () => {
+      try {
+        const data = await layViTriPhanTrang(1, 8);
+        setNearbyLocations(data.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchViTri();
+  }, []);
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <header className="sticky top-0 z-50 bg-black text-white shadow-md">
@@ -168,37 +187,7 @@ const Home = () => {
 
       <section className="relative bg-black pb-16">
         <div className="mx-auto max-w-7xl px-6 pt-8">
-          <div className="relative z-20 mx-auto -mb-10 grid max-w-5xl grid-cols-1 overflow-hidden rounded-full bg-white shadow-2xl md:grid-cols-5">
-            <div className="border-b px-8 py-4 md:col-span-2 md:border-b-0 md:border-r">
-              <p className="text-xs font-bold">Địa điểm</p>
-              <p className="text-sm text-gray-500">Bạn sắp đi đâu?</p>
-            </div>
-
-            <div className="border-b px-8 py-4 md:border-b-0 md:border-r">
-              <p className="text-xs font-bold">Nhận phòng</p>
-              <p className="text-sm text-gray-500">Thêm ngày</p>
-            </div>
-
-            <div className="border-b px-8 py-4 md:border-b-0 md:border-r">
-              <p className="text-xs font-bold">Trả phòng</p>
-              <p className="text-sm text-gray-500">Thêm ngày</p>
-            </div>
-
-            <div className="flex items-center justify-between px-8 py-4">
-              <div>
-                <p className="text-xs font-bold">Khách</p>
-                <p className="text-sm text-gray-500">Thêm khách</p>
-              </div>
-
-              <Button
-                type="primary"
-                shape="circle"
-                size="large"
-                icon={<SearchOutlined />}
-                className="bg-rose-500 "
-              />
-            </div>
-          </div>
+          <SearchBar />
 
           <div className="relative overflow-hidden rounded-b-3xl">
             <img
@@ -251,18 +240,17 @@ const Home = () => {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {nearbyLocations.map((item) => (
               <div
-                key={item.name}
+                key={item.id}
                 className="flex cursor-pointer items-center gap-4 rounded-2xl p-3 transition hover:bg-gray-100"
               >
                 <img
-                  src={item.image}
-                  alt={item.name}
+                  src={item.hinhAnh}
+                  alt={item.tenViTri}
                   className="h-16 w-16 rounded-xl object-cover"
                 />
-
                 <div>
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-sm text-gray-500">{item.time}</p>
+                  <h3 className="font-semibold">{item.tenViTri}</h3>
+                  <p className="text-sm text-gray-500">{item.tinhThanh}</p>
                 </div>
               </div>
             ))}

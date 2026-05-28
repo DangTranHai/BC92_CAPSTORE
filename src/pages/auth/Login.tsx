@@ -14,14 +14,14 @@ const Login = () => {
     try {
       const data = await dispatch(login(values)).unwrap();
 
-      message.success("Đăng nhập thành công");
+message.success("Đăng nhập thành công");
 
-      if (data.user.role === "ADMIN") {
-        navigate("/admin");
-        return;
-      }
+if (data.user.role === "ADMIN") {
+  navigate("/admin");
+  return;
+}
 
-      navigate("/");
+navigate("/");
     } catch (error) {
       const errorMessage =
         typeof error === "string" ? error : "Đăng nhập thất bại";

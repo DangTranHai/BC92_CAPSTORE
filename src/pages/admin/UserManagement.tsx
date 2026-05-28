@@ -1,104 +1,150 @@
-import { Button, Form, Input, Modal, Popconfirm, Radio, Space, Table, Tag, message } from "antd";
-import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
-import type { StoredUser } from "../../types/auth.type";
+import {
+  Button,
+  Card,
+  Form,
+  Input,
+  Select,
+  Space,
+  Table,
+  Tag,
+  message,
+  Popconfirm,
+} from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { userService } from "../../services/userService";
+import type { User, UserForm } from "../../services/userService";
 
-const USERS_KEY = "AUTH_USERS";
+const initialForm: UserForm = {
+  id: 0,
+  name: "",
+  email: "",
+  password: "",
+  phone: "",
+  birthday: "",
+  gender: true,
+  role: "USER",
+};
 
-const UserManagement = () => {
-  const [users, setUsers] = useState<StoredUser[]>([]);
-  const [open, setOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<StoredUser | null>(null);
-  const [form] = Form.useForm();
+export default function UserManagement() {
+  const [form] = Form.useForm<UserForm>();
+  const [users, setUsers] = useState<User[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [keyword, setKeyword] = useState("");
+  const [pageIndex, setPageIndex] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalRow, setTotalRow] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const getUsers = () => {
-    const rawUsers = localStorage.getItem(USERS_KEY);
-    const data: StoredUser[] = rawUsers ? JSON.parse(rawUsers) : [];
-    setUsers(data);
-  };
+  const fetchUsers = async (
+    page = pageIndex,
+    size = pageSize,
+    search = keyword
+  ) => {
+    try {
+      setLoading(true);
 
-  const saveUsers = (nextUsers: StoredUser[]) => {
-    localStorage.setItem(USERS_KEY, JSON.stringify(nextUsers));
-    setUsers(nextUsers);
+      const res = await userService.getUsersPagination(page, size, search);
+
+      setUsers(res.data.content?.data || []);
+      setTotalRow(res.data.content?.totalRow || 0);
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.content ||
+          error.response?.data?.message ||
+          "Không tải được danh sách user"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    getUsers();
+    fetchUsers(1, pageSize, "");
   }, []);
 
-  const handleOpenCreate = () => {
-    setEditingUser(null);
-    form.resetFields();
-    form.setFieldsValue({
-      gender: true,
-      role: "USER",
-      avatar: "",
-    });
-    setOpen(true);
-  };
+  const handleSubmit = async (values: UserForm) => {
+    try {
+      if (editingId) {
+        await userService.updateUser(editingId, {
+          ...values,
+          id: editingId,
+        });
 
-  const handleOpenEdit = (user: StoredUser) => {
-    setEditingUser(user);
-    form.setFieldsValue(user);
-    setOpen(true);
-  };
+        message.success("Cập nhật user thành công");
+      } else {
+        await userService.addUser({
+          ...values,
+          id: 0,
+        });
 
-  const handleSubmit = async () => {
-    const values = await form.validateFields();
+        message.success("Thêm user thành công");
+      }
 
-    if (editingUser) {
-      const nextUsers = users.map((user) =>
-        user.id === editingUser.id
-          ? {
-              ...user,
-              ...values,
-            }
-          : user
+      handleReset();
+      fetchUsers(pageIndex, pageSize, keyword);
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.content ||
+          error.response?.data?.message ||
+          "Thao tác thất bại"
       );
-
-      saveUsers(nextUsers);
-      message.success("Cập nhật người dùng thành công");
-      setOpen(false);
-      return;
     }
-
-    const existedEmail = users.some(
-      (user) => user.email.toLowerCase() === values.email.toLowerCase()
-    );
-
-    if (existedEmail) {
-      message.error("Email đã tồn tại");
-      return;
-    }
-
-    const newUser: StoredUser = {
-      id: Date.now(),
-      name: values.name,
-      email: values.email,
-      password: values.password,
-      phone: values.phone,
-      birthday: values.birthday,
-      avatar: values.avatar || "",
-      gender: values.gender,
-      role: values.role,
-    };
-
-    saveUsers([...users, newUser]);
-    message.success("Thêm người dùng thành công");
-    setOpen(false);
   };
 
-  const handleDelete = (id: number) => {
-    const nextUsers = users.filter((user) => user.id !== id);
-    saveUsers(nextUsers);
-    message.success("Xóa người dùng thành công");
+  const handleEdit = async (id: number) => {
+    try {
+      const res = await userService.getUserById(id);
+      const user: User = res.data.content;
+
+      setEditingId(user.id);
+
+      form.setFieldsValue({
+        id: user.id,
+        name: user.name || "",
+        email: user.email || "",
+        password: user.password || "",
+        phone: user.phone || "",
+        birthday: user.birthday?.slice(0, 10) || "",
+        gender: user.gender,
+        role: user.role,
+      });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      message.error("Không lấy được chi tiết user");
+    }
   };
 
-  const columns: ColumnsType<StoredUser> = [
+  const handleDelete = async (id: number) => {
+    try {
+      await userService.deleteUser(id);
+      message.success("Xóa user thành công");
+      fetchUsers(pageIndex, pageSize, keyword);
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.content ||
+          error.response?.data?.message ||
+          "Xóa user thất bại"
+      );
+    }
+  };
+
+  const handleSearch = () => {
+    setPageIndex(1);
+    fetchUsers(1, pageSize, keyword);
+  };
+
+  const handleReset = () => {
+    setEditingId(null);
+    form.setFieldsValue(initialForm);
+  };
+
+  const columns: ColumnsType<User> = [
     {
       title: "ID",
       dataIndex: "id",
-      width: 100,
+      width: 90,
     },
     {
       title: "Họ tên",
@@ -111,10 +157,12 @@ const UserManagement = () => {
     {
       title: "Số điện thoại",
       dataIndex: "phone",
+      render: (phone) => phone || "Chưa có",
     },
     {
       title: "Ngày sinh",
       dataIndex: "birthday",
+      render: (birthday: string) => birthday?.slice(0, 10) || "Chưa có",
     },
     {
       title: "Giới tính",
@@ -122,24 +170,28 @@ const UserManagement = () => {
       render: (gender: boolean) => (gender ? "Nam" : "Nữ"),
     },
     {
-      title: "Vai trò",
+      title: "Role",
       dataIndex: "role",
       render: (role: string) =>
-        role === "ADMIN" ? <Tag color="red">ADMIN</Tag> : <Tag color="blue">USER</Tag>,
+        role === "ADMIN" ? (
+          <Tag color="red">ADMIN</Tag>
+        ) : (
+          <Tag color="blue">USER</Tag>
+        ),
     },
     {
-      title: "Thao tác",
+      title: "Hành động",
       render: (_, record) => (
         <Space>
-          <Button type="primary" onClick={() => handleOpenEdit(record)}>
+          <Button type="primary" onClick={() => handleEdit(record.id)}>
             Sửa
           </Button>
 
           <Popconfirm
-            title="Bạn có chắc muốn xóa người dùng này?"
+            title="Bạn có chắc muốn xóa user này?"
+            onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
             cancelText="Hủy"
-            onConfirm={() => handleDelete(record.id)}
           >
             <Button danger>Xóa</Button>
           </Popconfirm>
@@ -149,102 +201,112 @@ const UserManagement = () => {
   ];
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Quản lý người dùng</h2>
-          <p className="text-gray-500">
-            Thêm, sửa, xóa và phân quyền người dùng.
-          </p>
+    <Card title="Quản lý người dùng">
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={initialForm}
+        onFinish={handleSubmit}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Form.Item
+            label="Họ tên"
+            name="name"
+            rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}
+          >
+            <Input placeholder="Nhập họ tên" />
+          </Form.Item>
+
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[{ required: true, message: "Vui lòng nhập email" }]}
+          >
+            <Input placeholder="Nhập email" />
+          </Form.Item>
+
+          <Form.Item
+            label="Mật khẩu"
+            name="password"
+            rules={
+              editingId
+                ? []
+                : [{ required: true, message: "Vui lòng nhập mật khẩu" }]
+            }
+          >
+            <Input.Password placeholder="Nhập mật khẩu" />
+          </Form.Item>
+
+          <Form.Item label="Số điện thoại" name="phone">
+            <Input placeholder="Nhập số điện thoại" />
+          </Form.Item>
+
+          <Form.Item label="Ngày sinh" name="birthday">
+            <Input type="date" />
+          </Form.Item>
+
+          <Form.Item label="Giới tính" name="gender">
+            <Select
+              options={[
+                { label: "Nam", value: true },
+                { label: "Nữ", value: false },
+              ]}
+            />
+          </Form.Item>
+
+          <Form.Item label="Vai trò" name="role">
+            <Select
+              options={[
+                { label: "USER", value: "USER" },
+                { label: "ADMIN", value: "ADMIN" },
+              ]}
+            />
+          </Form.Item>
         </div>
 
-        <Button type="primary" onClick={handleOpenCreate}>
-          Thêm người dùng
-        </Button>
+        <Space>
+          <Button type="primary" htmlType="submit">
+            {editingId ? "Cập nhật user" : "Thêm user"}
+          </Button>
+
+          <Button onClick={handleReset}>Làm mới</Button>
+        </Space>
+      </Form>
+
+      <div className="flex justify-between items-center my-6">
+        <Space>
+          <Input
+            placeholder="Tìm kiếm theo tên"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={{ width: 300 }}
+          />
+
+          <Button type="primary" onClick={handleSearch}>
+            Tìm kiếm
+          </Button>
+        </Space>
+
+        <b>Tổng: {totalRow} user</b>
       </div>
 
       <Table
         rowKey="id"
         columns={columns}
         dataSource={users}
-        bordered
-        pagination={{ pageSize: 5 }}
+        loading={loading}
+        pagination={{
+          current: pageIndex,
+          pageSize,
+          total: totalRow,
+          showSizeChanger: true,
+          onChange: (page, size) => {
+            setPageIndex(page);
+            setPageSize(size);
+            fetchUsers(page, size, keyword);
+          },
+        }}
       />
-
-      <Modal
-        title={editingUser ? "Cập nhật người dùng" : "Thêm người dùng"}
-        open={open}
-        onCancel={() => setOpen(false)}
-        onOk={handleSubmit}
-        okText={editingUser ? "Cập nhật" : "Thêm mới"}
-        cancelText="Hủy"
-        destroyOnClose
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            label="Họ tên"
-            name="name"
-            rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label="Email"
-            name="email"
-            rules={[
-              { required: true, message: "Vui lòng nhập email" },
-              { type: "email", message: "Email không hợp lệ" },
-            ]}
-          >
-            <Input disabled={!!editingUser} />
-          </Form.Item>
-
-          <Form.Item
-            label="Mật khẩu"
-            name="password"
-            rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
-          >
-            <Input.Password />
-          </Form.Item>
-
-          <Form.Item
-            label="Số điện thoại"
-            name="phone"
-            rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label="Ngày sinh"
-            name="birthday"
-            rules={[{ required: true, message: "Vui lòng chọn ngày sinh" }]}
-          >
-            <Input type="date" />
-          </Form.Item>
-
-          <Form.Item label="Avatar" name="avatar">
-            <Input />
-          </Form.Item>
-
-          <Form.Item label="Giới tính" name="gender">
-            <Radio.Group>
-              <Radio value={true}>Nam</Radio>
-              <Radio value={false}>Nữ</Radio>
-            </Radio.Group>
-          </Form.Item>
-
-          <Form.Item label="Vai trò" name="role">
-            <Radio.Group>
-              <Radio value="USER">USER</Radio>
-              <Radio value="ADMIN">ADMIN</Radio>
-            </Radio.Group>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
+    </Card>
   );
-};
-
-export default UserManagement;
+}

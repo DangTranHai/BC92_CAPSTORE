@@ -2,7 +2,6 @@ import {
   GlobalOutlined,
   HomeOutlined,
   MenuOutlined,
-  SearchOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import { Button, Card } from "antd";
@@ -13,56 +12,6 @@ import SearchBar from "./components/SearchBar";
 import { layViTriPhanTrang } from "../../services/location.service";
 import type{ ViTri } from "../../types/location.type";
 
-const nearbyLocations = [
-  {
-    name: "Thành phố Hồ Chí Minh",
-    time: "15 phút lái xe",
-    image:
-      "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=300&auto=format&fit=crop",
-  },
-  {
-    name: "Cần Thơ",
-    time: "3 giờ lái xe",
-    image:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300&auto=format&fit=crop",
-  },
-  {
-    name: "Nha Trang",
-    time: "5.5 giờ lái xe",
-    image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=300&auto=format&fit=crop",
-  },
-  {
-    name: "Phú Quốc",
-    time: "5 giờ lái xe",
-    image:
-      "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?q=80&w=300&auto=format&fit=crop",
-  },
-  {
-    name: "Thành phố Tuy Hòa",
-    time: "7.5 giờ lái xe",
-    image:
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=300&auto=format&fit=crop",
-  },
-  {
-    name: "Thành phố Biên Hòa",
-    time: "45 phút lái xe",
-    image:
-      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=300&auto=format&fit=crop",
-  },
-  {
-    name: "Thị xã Thuận An",
-    time: "30 phút lái xe",
-    image:
-      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=300&auto=format&fit=crop",
-  },
-  {
-    name: "Phan Rang - Tháp Chàm",
-    time: "5 giờ lái xe",
-    image:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300&auto=format&fit=crop",
-  },
-];
 
 
 const travelTypes = [

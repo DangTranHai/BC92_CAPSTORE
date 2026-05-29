@@ -13,13 +13,23 @@ const ProtectedRoute = ({ children }: Props) => {
     return <Navigate to="/login" replace />;
   }
 
-  const auth = JSON.parse(rawAuth);
+  try {
+    const auth = JSON.parse(rawAuth);
+    const role = auth?.user?.role;
 
-  if (!auth?.token || auth?.user?.role !== "ADMIN") {
-    return <Navigate to="/" replace />;
+    if (!auth?.token) {
+      return <Navigate to="/login" replace />;
+    }
+
+    if (role !== "ADMIN") {
+      return <Navigate to="/" replace />;
+    }
+
+    return children;
+  } catch {
+    localStorage.removeItem(AUTH_KEY);
+    return <Navigate to="/login" replace />;
   }
-
-  return children;
 };
 
 export default ProtectedRoute;

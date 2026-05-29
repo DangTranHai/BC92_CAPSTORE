@@ -10,3 +10,12 @@ export const layDanhSachDatPhong = async (): Promise<DatPhong[]> => {
   const response = await api.get("/api/dat-phong");
   return response.data.content;
 };
+
+export const layDatPhongTheoNguoiDung = async (
+  maNguoiDung: number
+): Promise<DatPhong[]> => {
+  const response = await api.get(
+    `/api/dat-phong/lay-theo-nguoi-dung/${maNguoiDung}`
+  );
+  return response.data.content;
+};

@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { localAuthService } from "../services/local-auth.service";
+import { authService } from "../services/auth.service";
 import type {
   AuthData,
   SignInRequest,
@@ -15,44 +15,46 @@ type AuthState = {
 
 const initialState: AuthState = {
   loading: false,
-  data: localAuthService.getCurrentAuth(),
+  data: authService.getCurrentUser(),
   error: null,
 };
 
-export const login = createAsyncThunk<
-  AuthData,
-  SignInRequest,
-  { rejectValue: string }
->("auth/login", async (payload, { rejectWithValue }) => {
-  try {
-    return await localAuthService.signIn(payload);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Đăng nhập thất bại";
-    return rejectWithValue(message);
+export const login = createAsyncThunk<AuthData, SignInRequest, { rejectValue: string }>(
+  "auth/login",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await authService.signIn(payload);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Đăng nhập thất bại";
+      return rejectWithValue(message);
+    }
   }
-});
+);
 
-export const registerUser = createAsyncThunk<
-  User,
-  SignUpRequest,
-  { rejectValue: string }
->("auth/registerUser", async (payload, { rejectWithValue }) => {
-  try {
-    return await localAuthService.signUp(payload);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Đăng ký thất bại";
-    return rejectWithValue(message);
+export const registerUser = createAsyncThunk<User, SignUpRequest, { rejectValue: string }>(
+  "auth/registerUser",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await authService.signUp(payload);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Đăng ký thất bại";
+      return rejectWithValue(message);
+    }
   }
-});
+);
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     logout: (state) => {
-      localAuthService.logout();
+      authService.signOut();
       state.data = null;
       state.error = null;
       state.loading = false;
@@ -63,13 +65,10 @@ const authSlice = createSlice({
       state.loading = true;
       state.error = null;
     });
-
     builder.addCase(login.fulfilled, (state, action) => {
       state.loading = false;
       state.data = action.payload;
-      state.error = null;
     });
-
     builder.addCase(login.rejected, (state, action) => {
       state.loading = false;
       state.data = null;
@@ -80,12 +79,9 @@ const authSlice = createSlice({
       state.loading = true;
       state.error = null;
     });
-
     builder.addCase(registerUser.fulfilled, (state) => {
       state.loading = false;
-      state.error = null;
     });
-
     builder.addCase(registerUser.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload || "Đăng ký thất bại";

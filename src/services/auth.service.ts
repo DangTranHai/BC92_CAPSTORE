@@ -1,106 +1,34 @@
-import { AUTH_KEY, USERS_KEY } from "../constants/auth.constant";
-import type {
-  AuthData,
-  SignInRequest,
-  SignUpRequest,
-  StoredUser,
-  User,
-} from "../types/auth.type";
+import { api } from "./api";
+import type { AuthData, SignInRequest, SignUpRequest, User } from "../types/auth.type";
 
-const defaultAdmin: StoredUser = {
-  id: 66159,
-  name: "Admin Capstore",
-  email: "admin1@gmail.com",
-  password: "123456",
-  phone: "0909090909",
-  birthday: "2000-01-01",
-  avatar: "",
-  gender: true,
-  role: "ADMIN",
-};
-
-const saveUsers = (users: StoredUser[]) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
-
-const getUsers = (): StoredUser[] => {
-  const rawUsers = localStorage.getItem(USERS_KEY);
-  const users: StoredUser[] = rawUsers ? JSON.parse(rawUsers) : [];
-
-  const hasDefaultAdmin = users.some(
-    (user) => user.email.toLowerCase() === defaultAdmin.email.toLowerCase()
-  );
-
-  if (!hasDefaultAdmin) {
-    const nextUsers = [defaultAdmin, ...users];
-    saveUsers(nextUsers);
-    return nextUsers;
-  }
-
-  return users;
-};
-
-export const localAuthService = {
+export const authService = {
   signIn: async (payload: SignInRequest): Promise<AuthData> => {
-    const users = getUsers();
+    const response = await api.post("/api/auth/signin", payload);
+    const data = response.data.content;
 
-    const foundUser = users.find(
-      (user) =>
-        user.email.toLowerCase() === payload.email.toLowerCase() &&
-        user.password === payload.password
-    );
+    localStorage.setItem("accessToken", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
 
-    if (!foundUser) {
-      throw new Error("Email hoặc mật khẩu không đúng");
-    }
-
-    const { password, ...safeUser } = foundUser;
-
-    const authData: AuthData = {
-      user: safeUser,
-      token: `local-token-${Date.now()}`,
-    };
-
-    localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
-
-    return authData;
+    return data;
   },
 
   signUp: async (payload: SignUpRequest): Promise<User> => {
-    const users = getUsers();
+    const response = await api.post("/api/auth/signup", payload);
+    return response.data.content;
+  },
 
-    const existedEmail = users.some(
-      (user) => user.email.toLowerCase() === payload.email.toLowerCase()
-    );
+  signOut: (): void => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("user");
+},
 
-    if (existedEmail) {
-      throw new Error("Email đã tồn tại");
-    }
-
-    const newUser: StoredUser = {
-      id: Date.now(),
-      name: payload.name,
-      email: payload.email,
-      password: payload.password,
-      phone: payload.phone,
-      birthday: payload.birthday,
-      avatar: "",
-      gender: payload.gender,
-      role: "USER",
+  getCurrentUser: (): AuthData | null => {
+    const token = localStorage.getItem("accessToken");
+    const userStr = localStorage.getItem("user");
+    if (!token || !userStr) return null;
+    return {
+      token,
+      user: JSON.parse(userStr),
     };
-
-    saveUsers([...users, newUser]);
-
-    const { password, ...safeUser } = newUser;
-    return safeUser;
-  },
-
-  getCurrentAuth: (): AuthData | null => {
-    const rawAuth = localStorage.getItem(AUTH_KEY);
-    return rawAuth ? JSON.parse(rawAuth) : null;
-  },
-
-  logout: () => {
-    localStorage.removeItem(AUTH_KEY);
   },
 };

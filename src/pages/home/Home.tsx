@@ -2,16 +2,17 @@ import {
   GlobalOutlined,
   HomeOutlined,
   MenuOutlined,
-  SearchOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import { Button, Card } from "antd";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../store/auth.slice.ts";
+import type { AppDispatch, RootState } from "../../store/index.ts";
 import { useEffect, useState } from "react";
 import SearchBar from "./components/SearchBar";
 import { layViTriPhanTrang } from "../../services/location.service";
-import type{ ViTri } from "../../types/location.type";
+import type { ViTri } from "../../types/location.type";
 
 const nearbyLocations = [
   {
@@ -63,7 +64,6 @@ const nearbyLocations = [
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300&auto=format&fit=crop",
   },
 ];
-
 
 const travelTypes = [
   {
@@ -136,7 +136,7 @@ const footerColumns = [
 ];
 
 const Home = () => {
-    const [nearbyLocations, setNearbyLocations] = useState<ViTri[]>([]);
+  const [nearbyLocations, setNearbyLocations] = useState<ViTri[]>([]);
 
   useEffect(() => {
     const fetchViTri = async () => {
@@ -149,11 +149,23 @@ const Home = () => {
     };
     fetchViTri();
   }, []);
+
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { data: authData } = useSelector((state: RootState) => state.auth);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/");
+  };
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <header className="sticky top-0 z-50 bg-black text-white shadow-md">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-white">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-2xl font-bold text-white"
+          >
             <HomeOutlined />
             <span>airbnb</span>
           </Link>
@@ -167,19 +179,44 @@ const Home = () => {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Link to="/register" className="hidden text-sm font-semibold text-white md:block">
-              Đăng ký
-            </Link>
-
-            <Link to="/login" className="hidden text-sm font-semibold text-white md:block">
-              Đăng nhập
-            </Link>
+            {authData ? (
+              <>
+                <Link to="/profile" className="hidden text-sm font-semibold text-white hover:text-rose-400 md:block">
+                  Xin chào,{authData.user.name}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="hidden text-sm font-semibold text-white hover:text-rose-400 md:block"
+                >
+                  Đăng xuất
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/register"
+                  className="hidden text-sm font-semibold text-white hover:text-rose-400 md:block"
+                >
+                  Đăng ký
+                </Link>
+                <Link
+                  to="/login"
+                  className="hidden text-sm font-semibold text-white hover:text-rose-400 md:block"
+                >
+                  Đăng nhập
+                </Link>
+              </>
+            )}
 
             <GlobalOutlined className="hidden text-lg md:block" />
 
             <div className="flex items-center gap-3 rounded-full bg-white px-3 py-2 text-black">
-              <MenuOutlined />
-              <UserOutlined />
+              <Link to="/profile" className="hover:text-rose-400"
+              >
+                <MenuOutlined />
+                <UserOutlined />
+              </Link>
+
             </div>
           </div>
         </div>
@@ -207,18 +244,18 @@ const Home = () => {
                 chuyến đi tiếp theo của bạn.
               </p>
 
-              <div className="mt-8 flex justify-center gap-4">
-                <Link to="/login">
-                                  <Button
-                    type="primary"
-                    size="large"
-                    className="bg-rose-500 ">Đăng nhập</Button>
-                </Link>
-
-                <Link to="/register">
-                  <Button size="large">Đăng ký tài khoản</Button>
-                </Link>
-              </div>
+              {!authData && (
+                <div className="mt-8 flex justify-center gap-4">
+                  <Link to="/login">
+                    <Button type="primary" size="large" className="bg-rose-500">
+                      Đăng nhập
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button size="large">Đăng ký tài khoản</Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -287,8 +324,8 @@ const Home = () => {
                 Trở thành người đón tiếp khách
               </h2>
               <p className="mt-4 text-gray-300">
-                Chia sẻ không gian của bạn, kết nối với khách du lịch và quản
-                lý mọi thứ dễ dàng trên hệ thống.
+                Chia sẻ không gian của bạn, kết nối với khách du lịch và quản lý
+                mọi thứ dễ dàng trên hệ thống.
               </p>
 
               <Link to="/login">

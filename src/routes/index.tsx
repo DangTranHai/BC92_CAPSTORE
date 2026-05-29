@@ -11,6 +11,7 @@ import LocationManagement from "../pages/admin/LocationManagement";
 import RoomManagement from "../pages/admin/RoomManagement";
 import BookingManagement from "../pages/admin/BookingManagement";
 import ProtectedRoute from "./ProtectedRoute";
+import Profile from "../pages/profile/Profiles.tsx";
 
 export const router = createBrowserRouter([
   {
@@ -31,7 +32,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/rooms/detail/:id",
-    element: <RoomDetail/>
+    element: <RoomDetail/>,
+  },
+  {
+    path: "/profile",
+    element: <Profile/>,
   },
   {
     path: "/admin",

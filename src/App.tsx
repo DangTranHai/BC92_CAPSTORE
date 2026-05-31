@@ -3,8 +3,6 @@ import Login from "./pages/auth/Login";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
-import ProductManagement from "./pages/admin/ProductManagement";
-import OrderManagement from "./pages/admin/OrderManagement";
 
 function App() {
   return (

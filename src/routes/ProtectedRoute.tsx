@@ -15,7 +15,7 @@ const ProtectedRoute = ({ children }: Props) => {
 
   try {
     const auth = JSON.parse(rawAuth);
-    const role = auth?.user?.role;
+    const role = auth?.role;
 
     if (!auth?.token) {
       return <Navigate to="/login" replace />;

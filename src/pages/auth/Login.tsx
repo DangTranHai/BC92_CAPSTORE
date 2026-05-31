@@ -16,8 +16,8 @@ const Login = () => {
 
 message.success("Đăng nhập thành công");
 
-if (data.user.role === "ADMIN") {
-  navigate("/admin");
+if (data.user.role?.toUpperCase() === "ADMIN") {
+  navigate("/admin", { replace: true });
   return;
 }
 

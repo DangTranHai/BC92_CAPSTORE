@@ -17,10 +17,9 @@ const Login = () => {
 message.success("Đăng nhập thành công");
 
 if (data.user.role?.toUpperCase() === "ADMIN") {
-  navigate("/admin", { replace: true });
+  window.location.href = "/admin";
   return;
 }
-
 navigate("/");
     } catch (error) {
       const errorMessage =

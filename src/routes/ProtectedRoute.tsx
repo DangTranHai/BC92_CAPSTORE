@@ -21,9 +21,9 @@ const ProtectedRoute = ({ children }: Props) => {
       return <Navigate to="/login" replace />;
     }
 
-    if (role !== "ADMIN") {
-      return <Navigate to="/" replace />;
-    }
+if (role?.toUpperCase() !== "ADMIN") {
+  return <Navigate to="/" replace />;
+}
 
     return children;
   } catch {

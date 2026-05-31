@@ -17,9 +17,6 @@ const ProtectedRoute = ({ children }: Props) => {
     const auth = JSON.parse(rawAuth);
     const role = auth?.role;
 
-    if (!auth?.token) {
-      return <Navigate to="/login" replace />;
-    }
 
 if (role?.toUpperCase() !== "ADMIN") {
   return <Navigate to="/" replace />;

@@ -11,7 +11,7 @@ import LocationManagement from "../pages/admin/LocationManagement";
 import RoomManagement from "../pages/admin/RoomManagement";
 import BookingManagement from "../pages/admin/BookingManagement";
 import ProtectedRoute from "./ProtectedRoute";
-import Profile from "../pages/profile/Profiles.tsx";
+import Profile from "../layouts/AuthLayout.tsx";
 
 export const router = createBrowserRouter([
   {

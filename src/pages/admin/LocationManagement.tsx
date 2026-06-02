@@ -8,12 +8,9 @@ import {
   Popconfirm,
   Space,
   Table,
-  Upload,
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { UploadFile } from "antd/es/upload/interface";
-import { UploadOutlined } from "@ant-design/icons";
 import { api } from "../../services/api";
 
 type Location = {
@@ -24,15 +21,7 @@ type Location = {
   hinhAnh: string;
 };
 
-type LocationForm = {
-  id: number;
-  tenViTri: string;
-  tinhThanh: string;
-  quocGia: string;
-  hinhAnh: string;
-};
-
-const initialForm: LocationForm = {
+const initialForm: Location = {
   id: 0,
   tenViTri: "",
   tinhThanh: "",
@@ -41,62 +30,28 @@ const initialForm: LocationForm = {
 };
 
 export default function LocationManagement() {
-  const [form] = Form.useForm<LocationForm>();
+  const [form] = Form.useForm<Location>();
   const [locations, setLocations] = useState<Location[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
-
-  const getAllLocations = () => api.get("/api/vi-tri");
-
-  const getLocationsPagination = (
-    pageIndex: number,
-    pageSize: number,
-    keyword: string
-  ) => {
-    return api.get("/api/vi-tri/phan-trang-tim-kiem", {
-      params: { pageIndex, pageSize, keyword },
-    });
-  };
-
-  const getLocationById = (id: number) => {
-    return api.get(`/api/vi-tri/${id}`);
-  };
-
-  const addLocation = (data: LocationForm) => {
-    return api.post("/api/vi-tri", data);
-  };
-
-  const updateLocation = (id: number, data: LocationForm) => {
-    return api.put(`/api/vi-tri/${id}`, data);
-  };
-
-  const deleteLocation = (id: number) => {
-    return api.delete(`/api/vi-tri/${id}`);
-  };
-
-  const uploadLocationImage = (maViTri: number, file: File) => {
-    const formData = new FormData();
-    formData.append("formFile", file);
-
-    return api.post("/api/vi-tri/upload-hinh-vitri", formData, {
-      params: { maViTri },
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  };
 
   const fetchLocations = async (search = keyword) => {
     try {
       setLoading(true);
 
       if (search.trim()) {
-        const res = await getLocationsPagination(1, 100, search.trim());
+        const res = await api.get("/api/vi-tri/phan-trang-tim-kiem", {
+          params: {
+            pageIndex: 1,
+            pageSize: 100,
+            keyword: search.trim(),
+          },
+        });
+
         setLocations(res.data.content?.data || []);
       } else {
-        const res = await getAllLocations();
+        const res = await api.get("/api/vi-tri");
         setLocations(res.data.content || []);
       }
     } catch (error: any) {
@@ -115,32 +70,22 @@ export default function LocationManagement() {
     fetchLocations("");
   }, []);
 
-  const handleSubmit = async (values: LocationForm) => {
+  const handleSubmit = async (values: Location) => {
     try {
-      const payload: LocationForm = {
+      const payload: Location = {
         id: editingId || 0,
         tenViTri: values.tenViTri.trim(),
         tinhThanh: values.tinhThanh.trim(),
         quocGia: values.quocGia.trim(),
-        hinhAnh: values.hinhAnh || "",
+        hinhAnh: values.hinhAnh?.trim() || "",
       };
 
-      let locationId = editingId;
-
       if (editingId) {
-        await updateLocation(editingId, payload);
+        await api.put(`/api/vi-tri/${editingId}`, payload);
         message.success("Cập nhật vị trí thành công");
       } else {
-        const res = await addLocation(payload);
-        locationId = res.data.content.id;
+        await api.post("/api/vi-tri", payload);
         message.success("Thêm vị trí thành công");
-      }
-
-      const file = fileList[0]?.originFileObj;
-
-      if (locationId && file) {
-        await uploadLocationImage(locationId, file);
-        message.success("Upload hình vị trí thành công");
       }
 
       handleReset();
@@ -156,7 +101,7 @@ export default function LocationManagement() {
 
   const handleEdit = async (id: number) => {
     try {
-      const res = await getLocationById(id);
+      const res = await api.get(`/api/vi-tri/${id}`);
       const location: Location = res.data.content;
 
       setEditingId(location.id);
@@ -169,17 +114,19 @@ export default function LocationManagement() {
         hinhAnh: location.hinhAnh || "",
       });
 
-      setFileList([]);
-
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
-      message.error("Không lấy được chi tiết vị trí");
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.content ||
+          error.response?.data?.message ||
+          "Không lấy được chi tiết vị trí"
+      );
     }
   };
 
   const handleDelete = async (id: number) => {
     try {
-      await deleteLocation(id);
+      await api.delete(`/api/vi-tri/${id}`);
       message.success("Xóa vị trí thành công");
       fetchLocations(keyword);
     } catch (error: any) {
@@ -191,6 +138,12 @@ export default function LocationManagement() {
     }
   };
 
+  const handleReset = () => {
+    setEditingId(null);
+    form.resetFields();
+    form.setFieldsValue(initialForm);
+  };
+
   const handleSearch = () => {
     fetchLocations(keyword);
   };
@@ -198,13 +151,6 @@ export default function LocationManagement() {
   const handleClearSearch = () => {
     setKeyword("");
     fetchLocations("");
-  };
-
-  const handleReset = () => {
-    setEditingId(null);
-    form.resetFields();
-    form.setFieldsValue(initialForm);
-    setFileList([]);
   };
 
   const columns: ColumnsType<Location> = [
@@ -300,19 +246,7 @@ export default function LocationManagement() {
           </Form.Item>
 
           <Form.Item label="Link hình ảnh" name="hinhAnh">
-            <Input placeholder="Có thể để trống nếu upload hình" />
-          </Form.Item>
-
-          <Form.Item label="Upload hình vị trí">
-            <Upload
-              beforeUpload={() => false}
-              fileList={fileList}
-              maxCount={1}
-              listType="picture"
-              onChange={({ fileList }) => setFileList(fileList)}
-            >
-              <Button icon={<UploadOutlined />}>Chọn hình</Button>
-            </Upload>
+            <Input placeholder="Có thể để trống" />
           </Form.Item>
         </div>
 
@@ -328,7 +262,7 @@ export default function LocationManagement() {
       <div className="flex justify-between items-center my-6">
         <Space>
           <Input
-            placeholder="Tìm kiếm theo tên vị trí"
+            placeholder="Tìm kiếm vị trí"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onPressEnter={handleSearch}

@@ -27,8 +27,8 @@ const AdminLayout = () => {
   };
 
   return (
-    <Layout className="min-h-screen">
-      <Sider width={250}>
+    <Layout className="min-h-screen w-full">
+      <Sider width={250} className="min-h-screen">
         <div className="h-16 flex items-center justify-center text-white text-xl font-bold">
           AIRBNB ADMIN
         </div>
@@ -74,16 +74,16 @@ const AdminLayout = () => {
         />
       </Sider>
 
-      <Layout>
+      <Layout className="min-h-screen">
         <Header className="bg-white flex justify-between items-center px-6 shadow-sm">
-          <h2 className="m-0 text-xl font-semibold">Trang quản trị</h2>
+          <h2 className="m-0 text-xl font-semibold text-white">Trang quản trị</h2>
 
           <Button danger icon={<LogoutOutlined />} onClick={handleLogout}>
             Đăng xuất
           </Button>
         </Header>
 
-        <Content className="m-6 p-6 bg-white rounded-xl shadow-sm">
+        <Content className="flex-1 m-6 p-6 bg-white rounded-xl shadow-sm">
           <Outlet />
         </Content>
       </Layout>

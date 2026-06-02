@@ -4,16 +4,38 @@ import {
   Card,
   Form,
   Input,
+  Popconfirm,
   Select,
   Space,
   Table,
   Tag,
   message,
-  Popconfirm,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { userService } from "../../services/userService";
-import type { User, UserForm } from "../../services/userService";
+import { api } from "../../services/api";
+
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  password?: string;
+  phone: string;
+  birthday: string;
+  avatar?: string;
+  gender: boolean;
+  role: "USER" | "ADMIN";
+};
+
+type UserForm = {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  birthday: string;
+  gender: boolean;
+  role: "USER" | "ADMIN";
+};
 
 const initialForm: UserForm = {
   id: 0,
@@ -28,46 +50,33 @@ const initialForm: UserForm = {
 
 export default function UserManagement() {
   const [form] = Form.useForm<UserForm>();
+
   const [users, setUsers] = useState<User[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
-  const [pageIndex, setPageIndex] = useState(1);
-  const [pageSize, setPageSize] = useState(100);
-  const [totalRow, setTotalRow] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const fetchUsers = async (
-    page = pageIndex,
-    size = pageSize,
-    search = keyword
-  ) => {
+  const fetchUsers = async (search = keyword) => {
     try {
       setLoading(true);
 
-      const res = await userService.getUsersPagination(
-        page,
-        size,
-        search.trim()
-      );
+      const res = await api.get("/api/users/phan-trang-tim-kiem", {
+        params: {
+          pageIndex: 1,
+          pageSize: 100,
+          keyword: search.trim(),
+        },
+      });
 
       const content = res.data.content;
+      const data = Array.isArray(content) ? content : content?.data || [];
 
-      const listUser: User[] = Array.isArray(content)
-        ? content
-        : content?.data || [];
-
-      setUsers(listUser);
-
-      setTotalRow(
-        Array.isArray(content)
-          ? content.length
-          : content?.totalRow || listUser.length
-      );
+      setUsers(data);
     } catch (error: any) {
       message.error(
         error.response?.data?.content ||
           error.response?.data?.message ||
-          "Không tải được danh sách user"
+          "Không tải được danh sách người dùng"
       );
     } finally {
       setLoading(false);
@@ -76,37 +85,38 @@ export default function UserManagement() {
 
   useEffect(() => {
     form.setFieldsValue(initialForm);
-    fetchUsers(1, 100, "");
+    fetchUsers("");
   }, []);
 
   const handleSubmit = async (values: UserForm) => {
     try {
-      const payload: UserForm = {
-        ...values,
-        email: values.email.trim(),
-        password: values.password?.trim() || "",
+      const payload: any = {
+        id: editingId || 0,
         name: values.name.trim(),
+        email: values.email.trim(),
         phone: values.phone?.trim() || "",
+        birthday: values.birthday || "",
+        gender: values.gender,
+        role: values.role,
       };
 
+      if (values.password?.trim()) {
+        payload.password = values.password.trim();
+      }
+
       if (editingId) {
-        await userService.updateUser(editingId, {
-          ...payload,
-          id: editingId,
-        });
-
-        message.success("Cập nhật user thành công");
+        await api.put(`/api/users/${editingId}`, payload);
+        message.success("Cập nhật người dùng thành công");
       } else {
-        await userService.addUser({
+        await api.post("/api/users", {
           ...payload,
-          id: 0,
+          password: values.password.trim(),
         });
-
-        message.success("Thêm user thành công");
+        message.success("Thêm người dùng thành công");
       }
 
       handleReset();
-      fetchUsers(pageIndex, pageSize, keyword);
+      fetchUsers(keyword);
     } catch (error: any) {
       message.error(
         error.response?.data?.content ||
@@ -118,7 +128,7 @@ export default function UserManagement() {
 
   const handleEdit = async (id: number) => {
     try {
-      const res = await userService.getUserById(id);
+      const res = await api.get(`/api/users/${id}`);
       const user: User = res.data.content;
 
       setEditingId(user.id);
@@ -131,82 +141,91 @@ export default function UserManagement() {
         phone: user.phone || "",
         birthday: user.birthday?.slice(0, 10) || "",
         gender: user.gender,
-        role: user.role,
+        role: user.role || "USER",
       });
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
-      message.error("Không lấy được chi tiết user");
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.content ||
+          error.response?.data?.message ||
+          "Không lấy được chi tiết người dùng"
+      );
     }
   };
 
   const handleDelete = async (id: number) => {
     try {
-      await userService.deleteUser(id);
-      message.success("Xóa user thành công");
+      await api.delete("/api/users", {
+        params: { id },
+      });
 
-      const nextUsers = users.filter((user) => user.id !== id);
-
-      if (nextUsers.length === 0 && pageIndex > 1) {
-        const previousPage = pageIndex - 1;
-        setPageIndex(previousPage);
-        fetchUsers(previousPage, pageSize, keyword);
-      } else {
-        fetchUsers(pageIndex, pageSize, keyword);
-      }
+      message.success("Xóa người dùng thành công");
+      fetchUsers(keyword);
     } catch (error: any) {
       message.error(
         error.response?.data?.content ||
           error.response?.data?.message ||
-          "Xóa user thất bại"
+          "Xóa người dùng thất bại"
       );
     }
-  };
-
-  const handleSearch = () => {
-    const searchText = keyword.trim();
-
-    setPageIndex(1);
-    fetchUsers(1, pageSize, searchText);
-  };
-
-  const handleClearSearch = () => {
-    setKeyword("");
-    setPageIndex(1);
-    fetchUsers(1, pageSize, "");
   };
 
   const handleReset = () => {
     setEditingId(null);
     form.resetFields();
-    form.setFieldsValue(initialForm);
+
+    setTimeout(() => {
+      form.setFieldsValue({
+        id: 0,
+        name: "",
+        email: "",
+        password: "",
+        phone: "",
+        birthday: "",
+        gender: true,
+        role: "USER",
+      });
+    }, 0);
+  };
+
+  const handleSearch = () => {
+    fetchUsers(keyword);
+  };
+
+  const handleClearSearch = () => {
+    setKeyword("");
+    fetchUsers("");
   };
 
   const columns: ColumnsType<User> = [
     {
       title: "ID",
       dataIndex: "id",
-      width: 90,
+      width: 80,
     },
     {
       title: "Họ tên",
       dataIndex: "name",
-      render: (name: string) => name || "Chưa có",
+      render: (text: string) => text || "Chưa có",
     },
     {
       title: "Email",
       dataIndex: "email",
-      render: (email: string) => email || "Chưa có",
+      render: (text: string) => text || "Chưa có",
     },
     {
       title: "Số điện thoại",
       dataIndex: "phone",
-      render: (phone: string) => phone || "Chưa có",
+      render: (text: string) => text || "Chưa có",
     },
     {
       title: "Ngày sinh",
       dataIndex: "birthday",
-      render: (birthday: string) => birthday?.slice(0, 10) || "Chưa có",
+      render: (text: string) => text?.slice(0, 10) || "Chưa có",
     },
     {
       title: "Giới tính",
@@ -214,7 +233,7 @@ export default function UserManagement() {
       render: (gender: boolean) => (gender ? "Nam" : "Nữ"),
     },
     {
-      title: "Role",
+      title: "Vai trò",
       dataIndex: "role",
       render: (role: string) =>
         role === "ADMIN" ? (
@@ -225,6 +244,7 @@ export default function UserManagement() {
     },
     {
       title: "Hành động",
+      width: 180,
       render: (_, record) => (
         <Space>
           <Button type="primary" onClick={() => handleEdit(record.id)}>
@@ -232,7 +252,7 @@ export default function UserManagement() {
           </Button>
 
           <Popconfirm
-            title="Bạn có chắc muốn xóa user này?"
+            title="Bạn có chắc muốn xóa người dùng này?"
             onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
             cancelText="Hủy"
@@ -251,28 +271,59 @@ export default function UserManagement() {
         layout="vertical"
         initialValues={initialForm}
         onFinish={handleSubmit}
+        autoComplete="off"
       >
+        {/* Chặn trình duyệt tự động điền email/mật khẩu đăng nhập cũ */}
+        <input
+          type="text"
+          name="fake_username"
+          autoComplete="username"
+          style={{ display: "none" }}
+        />
+
+        <input
+          type="password"
+          name="fake_password"
+          autoComplete="current-password"
+          style={{ display: "none" }}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Form.Item
             label="Họ tên"
             name="name"
-            rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng nhập họ tên",
+              },
+            ]}
           >
-            <Input placeholder="Nhập họ tên" autoComplete="off" />
+            <Input
+              placeholder="Nhập họ tên"
+              autoComplete="off"
+              name="new-user-name"
+            />
           </Form.Item>
 
           <Form.Item
             label="Email"
             name="email"
             rules={[
-              { required: true, message: "Vui lòng nhập email" },
-              { type: "email", message: "Email không hợp lệ" },
+              {
+                required: true,
+                message: "Vui lòng nhập email",
+              },
+              {
+                type: "email",
+                message: "Email không hợp lệ",
+              },
             ]}
           >
             <Input
               placeholder="Nhập email"
               autoComplete="new-email"
-              value={undefined}
+              name="new-user-email"
             />
           </Form.Item>
 
@@ -282,7 +333,12 @@ export default function UserManagement() {
             rules={
               editingId
                 ? []
-                : [{ required: true, message: "Vui lòng nhập mật khẩu" }]
+                : [
+                    {
+                      required: true,
+                      message: "Vui lòng nhập mật khẩu",
+                    },
+                  ]
             }
           >
             <Input.Password
@@ -292,23 +348,33 @@ export default function UserManagement() {
                   : "Nhập mật khẩu"
               }
               autoComplete="new-password"
-              value={undefined}
+              name="new-user-password"
             />
           </Form.Item>
 
           <Form.Item label="Số điện thoại" name="phone">
-            <Input placeholder="Nhập số điện thoại" autoComplete="off" />
+            <Input
+              placeholder="Nhập số điện thoại"
+              autoComplete="off"
+              name="new-user-phone"
+            />
           </Form.Item>
 
           <Form.Item label="Ngày sinh" name="birthday">
-            <Input type="date" autoComplete="off" />
+            <Input type="date" autoComplete="off" name="new-user-birthday" />
           </Form.Item>
 
           <Form.Item label="Giới tính" name="gender">
             <Select
               options={[
-                { label: "Nam", value: true },
-                { label: "Nữ", value: false },
+                {
+                  label: "Nam",
+                  value: true,
+                },
+                {
+                  label: "Nữ",
+                  value: false,
+                },
               ]}
             />
           </Form.Item>
@@ -316,8 +382,14 @@ export default function UserManagement() {
           <Form.Item label="Vai trò" name="role">
             <Select
               options={[
-                { label: "USER", value: "USER" },
-                { label: "ADMIN", value: "ADMIN" },
+                {
+                  label: "USER",
+                  value: "USER",
+                },
+                {
+                  label: "ADMIN",
+                  value: "ADMIN",
+                },
               ]}
             />
           </Form.Item>
@@ -325,7 +397,7 @@ export default function UserManagement() {
 
         <Space>
           <Button type="primary" htmlType="submit">
-            {editingId ? "Cập nhật user" : "Thêm user"}
+            {editingId ? "Cập nhật người dùng" : "Thêm người dùng"}
           </Button>
 
           <Button onClick={handleReset}>Làm mới</Button>
@@ -335,7 +407,7 @@ export default function UserManagement() {
       <div className="flex justify-between items-center my-6">
         <Space>
           <Input
-            placeholder="Tìm kiếm theo tên hoặc email"
+            placeholder="Tìm kiếm người dùng"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onPressEnter={handleSearch}
@@ -350,7 +422,7 @@ export default function UserManagement() {
           <Button onClick={handleClearSearch}>Xóa tìm kiếm</Button>
         </Space>
 
-        <b>Tổng: {totalRow} user</b>
+        <b>Tổng: {users.length} người dùng</b>
       </div>
 
       <Table
@@ -359,16 +431,9 @@ export default function UserManagement() {
         dataSource={users}
         loading={loading}
         pagination={{
-          current: pageIndex,
-          pageSize,
-          total: totalRow,
+          pageSize: 10,
           showSizeChanger: true,
           pageSizeOptions: ["10", "20", "50", "100"],
-          onChange: (page, size) => {
-            setPageIndex(page);
-            setPageSize(size);
-            fetchUsers(page, size, keyword);
-          },
         }}
       />
     </Card>

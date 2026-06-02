@@ -65,7 +65,7 @@ const Dashboard = () => {
         </Title>
         <Paragraph className="  mb-0 text-gray-500">
           Xin chào {auth?.user?.name || "Admin"}, đây là trang tổng quan hệ
-          thống quản trị Airbnb Clone.
+          thống quản trị Airbnb 
         </Paragraph>
       </div>
 

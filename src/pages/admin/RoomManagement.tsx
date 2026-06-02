@@ -10,12 +10,9 @@ import {
   Popconfirm,
   Space,
   Table,
-  Upload,
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { UploadFile } from "antd/es/upload/interface";
-import { UploadOutlined } from "@ant-design/icons";
 import { api } from "../../services/api";
 
 type Room = {
@@ -58,7 +55,7 @@ const initialForm: Room = {
   doXe: false,
   hoBoi: false,
   banUi: false,
-  maViTri: 0,
+  maViTri: 1,
   hinhAnh: "",
 };
 
@@ -68,52 +65,30 @@ export default function RoomManagement() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
-
-  const getAllRooms = () => api.get("/api/phong-thue");
-
-  const getRoomsPagination = (pageIndex: number, pageSize: number, keyword: string) => {
-    return api.get("/api/phong-thue/phan-trang-tim-kiem", {
-      params: { pageIndex, pageSize, keyword },
-    });
-  };
-
-  const getRoomById = (id: number) => api.get(`/api/phong-thue/${id}`);
-
-  const addRoom = (data: Room) => api.post("/api/phong-thue", data);
-
-  const updateRoom = (id: number, data: Room) => {
-    return api.put(`/api/phong-thue/${id}`, data);
-  };
-
-  const deleteRoom = (id: number) => api.delete(`/api/phong-thue/${id}`);
-
-  const uploadRoomImage = (maPhong: number, file: File) => {
-    const formData = new FormData();
-    formData.append("formFile", file);
-
-    return api.post("/api/phong-thue/upload-hinh-phong", formData, {
-      params: { maPhong },
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  };
 
   const fetchRooms = async (search = keyword) => {
     try {
       setLoading(true);
 
       if (search.trim()) {
-        const res = await getRoomsPagination(1, 100, search.trim());
+        const res = await api.get("/api/phong-thue/phan-trang-tim-kiem", {
+          params: {
+            pageIndex: 1,
+            pageSize: 100,
+            keyword: search.trim(),
+          },
+        });
+
         setRooms(res.data.content?.data || []);
       } else {
-        const res = await getAllRooms();
+        const res = await api.get("/api/phong-thue");
         setRooms(res.data.content || []);
       }
     } catch (error: any) {
       message.error(
         error.response?.data?.content ||
           error.response?.data?.message ||
-          "Không tải được danh sách phòng"
+          "Không tải được danh sách phòng thuê"
       );
     } finally {
       setLoading(false);
@@ -130,31 +105,23 @@ export default function RoomManagement() {
       const payload: Room = {
         ...values,
         id: editingId || 0,
+        tenPhong: values.tenPhong.trim(),
         khach: Number(values.khach),
         phongNgu: Number(values.phongNgu),
         giuong: Number(values.giuong),
         phongTam: Number(values.phongTam),
         giaTien: Number(values.giaTien),
         maViTri: Number(values.maViTri),
-        hinhAnh: values.hinhAnh || "",
+        moTa: values.moTa?.trim() || "",
+        hinhAnh: values.hinhAnh?.trim() || "",
       };
 
-      let roomId = editingId;
-
       if (editingId) {
-        await updateRoom(editingId, payload);
-        message.success("Cập nhật phòng thành công");
+        await api.put(`/api/phong-thue/${editingId}`, payload);
+        message.success("Cập nhật phòng thuê thành công");
       } else {
-        const res = await addRoom(payload);
-        roomId = res.data.content.id;
-        message.success("Thêm phòng thành công");
-      }
-
-      const file = fileList[0]?.originFileObj;
-
-      if (roomId && file) {
-        await uploadRoomImage(roomId, file);
-        message.success("Upload hình phòng thành công");
+        await api.post("/api/phong-thue", payload);
+        message.success("Thêm phòng thuê thành công");
       }
 
       handleReset();
@@ -170,7 +137,7 @@ export default function RoomManagement() {
 
   const handleEdit = async (id: number) => {
     try {
-      const res = await getRoomById(id);
+      const res = await api.get(`/api/phong-thue/${id}`);
       const room: Room = res.data.content;
 
       setEditingId(room.id);
@@ -179,39 +146,43 @@ export default function RoomManagement() {
         hinhAnh: room.hinhAnh || "",
       });
 
-      setFileList([]);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
-      message.error("Không lấy được chi tiết phòng");
+    } catch (error: any) {
+      message.error(
+        error.response?.data?.content ||
+          error.response?.data?.message ||
+          "Không lấy được chi tiết phòng thuê"
+      );
     }
   };
 
   const handleDelete = async (id: number) => {
     try {
-      await deleteRoom(id);
-      message.success("Xóa phòng thành công");
+      await api.delete(`/api/phong-thue/${id}`);
+      message.success("Xóa phòng thuê thành công");
       fetchRooms(keyword);
     } catch (error: any) {
       message.error(
         error.response?.data?.content ||
           error.response?.data?.message ||
-          "Xóa phòng thất bại"
+          "Xóa phòng thuê thất bại"
       );
     }
-  };
-
-  const handleSearch = () => fetchRooms(keyword);
-
-  const handleClearSearch = () => {
-    setKeyword("");
-    fetchRooms("");
   };
 
   const handleReset = () => {
     setEditingId(null);
     form.resetFields();
     form.setFieldsValue(initialForm);
-    setFileList([]);
+  };
+
+  const handleSearch = () => {
+    fetchRooms(keyword);
+  };
+
+  const handleClearSearch = () => {
+    setKeyword("");
+    fetchRooms("");
   };
 
   const columns: ColumnsType<Room> = [
@@ -252,10 +223,10 @@ export default function RoomManagement() {
       width: 100,
     },
     {
-      title: "Giá",
+      title: "Giá tiền",
       dataIndex: "giaTien",
-      width: 120,
-      render: (price: number) => `${price?.toLocaleString()}$`,
+      width: 130,
+      render: (price: number) => `${Number(price || 0).toLocaleString()} VND`,
     },
     {
       title: "Mã vị trí",
@@ -330,7 +301,7 @@ export default function RoomManagement() {
           </Form.Item>
 
           <Form.Item label="Link hình ảnh" name="hinhAnh">
-            <Input placeholder="Có thể để trống nếu upload hình" />
+            <Input placeholder="Có thể để trống" />
           </Form.Item>
 
           <Form.Item label="Mô tả" name="moTa" className="md:col-span-2">
@@ -376,18 +347,6 @@ export default function RoomManagement() {
               </Form.Item>
             </Space>
           </Form.Item>
-
-          <Form.Item label="Upload hình phòng" className="md:col-span-2">
-            <Upload
-              beforeUpload={() => false}
-              fileList={fileList}
-              maxCount={1}
-              listType="picture"
-              onChange={({ fileList }) => setFileList(fileList)}
-            >
-              <Button icon={<UploadOutlined />}>Chọn hình</Button>
-            </Upload>
-          </Form.Item>
         </div>
 
         <Space>
@@ -402,7 +361,7 @@ export default function RoomManagement() {
       <div className="flex justify-between items-center my-6">
         <Space>
           <Input
-            placeholder="Tìm kiếm theo tên phòng"
+            placeholder="Tìm kiếm phòng thuê"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onPressEnter={handleSearch}

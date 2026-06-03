@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   GlobalOutlined,
   HomeOutlined,
@@ -11,27 +11,52 @@ import {
   HeartFilled,
 } from "@ant-design/icons";
 import {
-  MdKitchen, MdAcUnit, MdLocalLaundryService,
-  MdTv, MdPool, MdLocalParking, MdStar
+  MdKitchen,
+  MdAcUnit,
+  MdLocalLaundryService,
+  MdTv,
+  MdPool,
+  MdLocalParking,
+  MdStar,
 } from "react-icons/md";
-import type{ Phong } from "../../types/room.type";
+import { message } from "antd";
+
+import type { Phong } from "../../types/room.type";
+import type { BinhLuan } from "../../types/booking.type.ts";
+import type { ViTri } from "../../types/location.type.ts";
+
 import { api } from "../../services/api";
+import { layBinhLuanTheoPhong } from "../../services/comment.service.ts";
+import { layDanhSachViTri } from "../../services/location.service.ts";
+
 import RoomGallery from "./components/RoomGallery";
 import BookingForm from "./components/BookingForm";
 import CommentSection from "./components/CommentSection";
-import { message } from "antd";
-import type{ BinhLuan } from "../../types/booking.type.ts";
-import { layBinhLuanTheoPhong } from "../../services/comment.service.ts";
-import type{ ViTri } from "../../types/location.type.ts";
-import { layDanhSachViTri } from "../../services/location.service.ts";
 
 const RoomDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
   const [phong, setPhong] = useState<Phong | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [binhLuans, setBinhLuans] = useState<BinhLuan[]>([]);
   const [daLuu, setDaLuu] = useState<boolean>(false);
   const [tenViTri, setTenViTri] = useState<string>("");
+
+  const authUser = JSON.parse(localStorage.getItem("AUTH_USER") || "null");
+  const authData = JSON.parse(localStorage.getItem("AUTH_DATA") || "null");
+
+  const currentUser = authData?.user || authUser;
+
+  const handleLogout = () => {
+    localStorage.removeItem("AUTH_DATA");
+    localStorage.removeItem("AUTH_USER");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("token");
+
+    message.success("Đăng xuất thành công");
+    navigate("/");
+  };
 
   useEffect(() => {
     const fetchPhong = async () => {
@@ -44,7 +69,10 @@ const RoomDetail = () => {
         setLoading(false);
       }
     };
-    if (id) fetchPhong();
+
+    if (id) {
+      fetchPhong();
+    }
   }, [id]);
 
   useEffect(() => {
@@ -52,52 +80,66 @@ const RoomDetail = () => {
       try {
         const data = await layBinhLuanTheoPhong(Number(id));
         setBinhLuans(data);
-        
       } catch (error) {
         console.error(error);
       }
     };
 
-    const fetchViTri = async ( maViTri: Number ) => {
+    const fetchViTri = async (maViTri: number) => {
       try {
         const data = await layDanhSachViTri();
         const viTri = data.find((vt: ViTri) => vt.id === maViTri);
-        if(viTri) setTenViTri(`${viTri.tenViTri}, ${viTri.tinhThanh}`);
+
+        if (viTri) {
+          setTenViTri(`${viTri.tenViTri}, ${viTri.tinhThanh}`);
+        }
       } catch (error) {
         console.error(error);
       }
     };
 
-    if(id) {
+    if (id) {
       fetchBinhLuan();
-    };
+    }
 
     if (phong?.maViTri) {
       fetchViTri(phong.maViTri);
-    };
-
+    }
   }, [id, phong]);
-
-  if (loading) return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-gray-400">Đang tải...</p>
-    </div>
-  );
-
-  if (!phong) return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-gray-400">Không tìm thấy phòng.</p>
-    </div>
-  );
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     message.success("Đã sao chép link!");
   };
+
   const handleYeuThich = () => {
     setDaLuu(!daLuu);
     message.success(daLuu ? "Đã bỏ lưu!" : "Đã lưu vào yêu thích!");
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-400">Đang tải...</p>
+      </div>
+    );
+  }
+
+  if (!phong) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-400">Không tìm thấy phòng.</p>
+      </div>
+    );
+  }
+
+  const diemTrungBinh =
+    binhLuans.length > 0
+      ? (
+          binhLuans.reduce((acc, bl) => acc + bl.saoBinhLuan, 0) /
+          binhLuans.length
+        ).toFixed(2)
+      : "Chưa có";
 
   const tienNghi = [
     { icon: <MdKitchen />, label: "Bếp", value: phong.bep },
@@ -112,36 +154,67 @@ const RoomDetail = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-white shadow-sm">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-rose-500">
+      <header className="sticky top-0 z-50 bg-black text-white shadow-md">
+        <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-8">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-3xl font-bold text-white hover:text-white"
+          >
             <HomeOutlined />
             <span>airbnb</span>
           </Link>
 
-          <nav className="hidden items-center gap-10 text-sm font-medium md:flex">
-            <a className="text-white hover:text-rose-400">Nơi ở</a>
-            <a className="text-white hover:text-rose-400">Trải nghiệm</a>
-            <a className="text-white hover:text-rose-400">
-              Trải nghiệm trực tuyến
-            </a>
+          {/* Menu giữa */}
+          <nav className="hidden items-center text-base font-semibold md:flex">
+            <span className="text-white">Trải nghiệm trực tuyến</span>
           </nav>
 
-          <div className="flex items-center gap-4">
-            <Link to="/register" className="hidden text-sm font-semibold text-black md:block">
-              Đăng ký
+          {/* Bên phải */}
+          <div className="flex items-center gap-6">
+            {currentUser ? (
+              <>
+                <Link
+                  to="/profile"
+                  className="hidden text-base font-semibold text-white hover:text-rose-400 md:block"
+                >
+                  Xin chào,{currentUser.name}
+                </Link>
+
+                {/* <button
+                  onClick={handleLogout}
+                  className="hidden text-base font-semibold text-white hover:text-rose-400 md:block"
+                >
+                  Đăng xuất
+                </button> */}
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/register"
+                  className="hidden text-base font-semibold text-white hover:text-rose-400 md:block"
+                >
+                  Đăng ký
+                </Link>
+
+                <Link
+                  to="/login"
+                  className="hidden text-base font-semibold text-white hover:text-rose-400 md:block"
+                >
+                  Đăng nhập
+                </Link>
+              </>
+            )}
+
+            <GlobalOutlined className="hidden text-2xl text-white md:block" />
+
+            <Link
+              to={currentUser ? "/profile" : "/login"}
+              className="flex items-center gap-3 rounded-full bg-white px-5 py-3 text-black shadow-md hover:text-rose-500"
+            >
+              <MenuOutlined className="text-xl" />
+              <UserOutlined className="text-xl" />
             </Link>
-
-            <Link to="/login" className="hidden text-sm font-semibold text-black md:block">
-              Đăng nhập
-            </Link>
-
-            <GlobalOutlined className="hidden text-lg md:block" />
-
-            <div className="flex items-center gap-3 rounded-full bg-white px-3 py-2 text-black">
-              <MenuOutlined />
-              <UserOutlined />
-            </div>
           </div>
         </div>
       </header>
@@ -149,36 +222,51 @@ const RoomDetail = () => {
       <div className="mx-auto max-w-7xl px-6 py-8">
         {/* Tên phòng */}
         <h1 className="mb-2 text-3xl font-bold">{phong.tenPhong}</h1>
+
         {/* Dòng ghi chú dưới */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           {/* Left */}
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="flex items-center gap-1 font-semibold text-gray-400">
-              <MdStar/> {binhLuans.length > 0 
-              ? (binhLuans.reduce((acc, bl) => acc + bl.saoBinhLuan, 0) / binhLuans.length).toFixed(2)
-               : "Chưa có"}
+            <span className="flex items-center gap-1 font-semibold text-gray-500">
+              <MdStar className="text-rose-500" />
+              {diemTrungBinh}
             </span>
+
             {binhLuans.length > 0 && (
-              <>
-                <span className="cursor-pointer text-gray-400 fw-light underline">({binhLuans.length} đánh giá)</span>
-              </>
+              <span className="cursor-pointer font-light text-gray-500 underline">
+                ({binhLuans.length} đánh giá)
+              </span>
             )}
 
-            <span>·</span>
-            <span className="cursor-pointer text-gray-400 fw-light underline">{tenViTri}</span>
+            <span className="text-gray-400">·</span>
+
+            <span className="cursor-pointer font-light text-gray-500 underline">
+              {tenViTri}
+            </span>
           </div>
+
           {/* Right */}
           <div className="flex items-center gap-1">
-            <button onClick={handleShare} className="flex items-center gap-1 rounded-lg px-3 text-sm underline hover:bg-gray-200 fw-lighter">
-              <ShareAltOutlined /> Chia sẻ
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm underline hover:bg-gray-100"
+            >
+              <ShareAltOutlined />
+              Chia sẻ
             </button>
 
-            <button onClick={handleYeuThich} className="flex items-center gap-1 rounded-lg px-3 text-sm underline hover:bg-gray-200 fw-lighter">
-              {daLuu ? <HeartFilled className="text-rose-500"/> : <HeartOutlined/>}
-              {daLuu ? "Đã Lưu" : "Lưu"}
+            <button
+              onClick={handleYeuThich}
+              className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm underline hover:bg-gray-100"
+            >
+              {daLuu ? (
+                <HeartFilled className="text-rose-500" />
+              ) : (
+                <HeartOutlined />
+              )}
+              {daLuu ? "Đã lưu" : "Lưu"}
             </button>
           </div>
-
         </div>
 
         {/* Gallery */}
@@ -199,18 +287,22 @@ const RoomDetail = () => {
 
             {/* Mô tả */}
             <div className="border-b py-6">
-              <p className="text-gray-700 leading-relaxed">{phong.moTa}</p>
+              <p className="leading-relaxed text-gray-700">{phong.moTa}</p>
             </div>
 
             {/* Tiện nghi */}
-            <div className="py-6">
+            <div className="border-b py-6">
               <h2 className="mb-4 text-xl font-semibold">Tiện nghi</h2>
-              <div className="grid grid-cols-2 gap-3">
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {tienNghi
                   .filter((t) => t.value)
                   .map((t) => (
-                    <div key={t.label} className="flex items-center gap-3 text-sm">
-                      <span className="text-xl">{t.icon}</span>
+                    <div
+                      key={t.label}
+                      className="flex items-center gap-3 text-sm text-gray-700"
+                    >
+                      <span className="text-2xl text-gray-900">{t.icon}</span>
                       <span>{t.label}</span>
                     </div>
                   ))}
@@ -218,7 +310,9 @@ const RoomDetail = () => {
             </div>
 
             {/* Bình luận */}
-            <CommentSection maPhong={phong.id} />
+            <div className="py-6">
+              <CommentSection maPhong={phong.id} />
+            </div>
           </div>
 
           {/* Cột phải - Form đặt phòng */}

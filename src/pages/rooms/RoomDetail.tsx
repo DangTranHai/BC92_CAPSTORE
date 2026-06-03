@@ -181,12 +181,12 @@ const RoomDetail = () => {
                   Xin chào,{currentUser.name}
                 </Link>
 
-                {/* <button
+                <button
                   onClick={handleLogout}
                   className="hidden text-base font-semibold text-white hover:text-rose-400 md:block"
                 >
                   Đăng xuất
-                </button> */}
+                </button>
               </>
             ) : (
               <>

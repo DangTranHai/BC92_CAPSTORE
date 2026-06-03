@@ -121,8 +121,8 @@ const Home = () => {
           </Link>
 
           <nav className="hidden items-center gap-10 text-sm font-medium md:flex">
-            <a className="text-white hover:text-rose-400">Nơi ở</a>
-            <a className="text-white hover:text-rose-400">Trải nghiệm</a>
+            <a className="text-white hover:text-rose-400">    </a>
+            <a className="text-white hover:text-rose-400">    </a>
             <a className="text-white hover:text-rose-400">
               Trải nghiệm trực tuyến
             </a>
@@ -267,7 +267,7 @@ const Home = () => {
           </div>
         </section>
 
-        <section className="mt-16 overflow-hidden rounded-3xl bg-black text-white">
+        {/* <section className="mt-16 overflow-hidden rounded-3xl bg-black text-white">
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div className="p-10 md:p-14">
               <h2 className="text-4xl font-bold leading-tight">
@@ -291,7 +291,7 @@ const Home = () => {
               className="h-full  w-full object-cover"
             />
           </div>
-        </section>
+        </section> */}
       </main>
 
       <footer className="border-t bg-gray-50">

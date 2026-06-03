@@ -292,6 +292,67 @@ const Home = () => {
             />
           </div>
         </section> */}
+
+        <section className="mt-16 overflow-hidden rounded-[32px] bg-gradient-to-br from-black via-neutral-900 to-rose-950 text-white shadow-2xl">
+  <div className="grid grid-cols-1 items-center gap-10 p-8 md:grid-cols-2 md:p-14">
+    <div>
+      <p className="mb-5 inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-rose-100 backdrop-blur">
+        Không gian lưu trú hiện đại
+      </p>
+
+      <h2 className="text-4xl font-bold leading-tight md:text-5xl">
+        Tận hưởng những chuyến đi thoải mái như ở nhà
+      </h2>
+
+      <p className="mt-5 max-w-xl text-base leading-7 text-gray-300">
+        Khám phá các căn hộ, phòng nghỉ và không gian lưu trú được thiết kế
+        tinh tế, phù hợp cho du lịch, nghỉ dưỡng hoặc những chuyến công tác
+        ngắn ngày. Mọi trải nghiệm đều được tối ưu để mang lại sự tiện nghi,
+        riêng tư và dễ chịu cho người dùng.
+      </p>
+
+      <div className="mt-10 grid grid-cols-3 gap-4">
+        <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+          <p className="text-2xl font-bold">100+</p>
+          <p className="mt-1 text-sm text-gray-300">Phòng lưu trú</p>
+        </div>
+
+        <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+          <p className="text-2xl font-bold">24/7</p>
+          <p className="mt-1 text-sm text-gray-300">Hỗ trợ tiện lợi</p>
+        </div>
+
+        <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+          <p className="text-2xl font-bold">5★</p>
+          <p className="mt-1 text-sm text-gray-300">Trải nghiệm tốt</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="relative">
+      <div className="absolute -left-6 -top-6 h-32 w-32 rounded-full bg-rose-500/30 blur-3xl" />
+      <div className="absolute -bottom-6 -right-6 h-40 w-40 rounded-full bg-pink-500/30 blur-3xl" />
+
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/10 p-3 shadow-2xl backdrop-blur">
+        <img
+          src="https://images.unsplash.com/photo-1560184897-ae75f418493e?q=80&w=1200&auto=format&fit=crop"
+          alt="Không gian lưu trú"
+          className="h-[420px] w-full rounded-[22px] object-cover"
+        />
+
+        <div className="absolute bottom-8 left-8 right-8 rounded-2xl bg-black/60 p-5 backdrop-blur-md">
+          <p className="text-lg font-semibold">
+            Không gian đẹp, tiện nghi và dễ dàng đặt phòng
+          </p>
+          <p className="mt-2 text-sm text-gray-300">
+            Lựa chọn nơi ở phù hợp cho mọi hành trình với giao diện thân thiện
+            và trải nghiệm mượt mà.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
       </main>
 
       <footer className="border-t bg-gray-50">
